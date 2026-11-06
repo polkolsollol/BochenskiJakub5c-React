@@ -1,4 +1,5 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import Header from "./components/Header";
 import Menu from "./components/Menu";
 import UserCard from "./components/UserCard";
@@ -33,11 +34,11 @@ const users = [
 ];
 
 const FILTER_OPTIONS = [
-    { value: "wszystkie",  label: "Wszystkie" },
-    { value: "sortAsc",    label: "Cena: rosnąco" },
-    { value: "sortDesc",   label: "Cena: malejąco" },
+    { value: "wszystkie", label: "Wszystkie" },
+    { value: "sortAsc", label: "Cena: rosnąco" },
+    { value: "sortDesc", label: "Cena: malejąco" },
     { value: "underPrice", label: "Cena poniżej..." },
-    { value: "overPrice",  label: "Cena powyżej..." },
+    { value: "overPrice", label: "Cena powyżej..." },
     { value: "exactPrice", label: "Dokładna cena..." },
 ];
 
@@ -46,8 +47,24 @@ function App() {
     const [category, setCategory] = useState("Wszystkie");
     const [filterType, setFilterType] = useState("wszystkie");
     const [priceInput, setPriceInput] = useState("");
-    const [cartItems, setCartItems] = useState([]);
+
+    // Odczyt koszyka z localStorage przy uruchomieniu aplikacji
+    const [cartItems, setCartItems] = useState(() => {
+        try {
+            const savedCart = localStorage.getItem("cartItems");
+            return savedCart ? JSON.parse(savedCart) : [];
+        } catch (error) {
+            console.error("Błąd odczytu koszyka:", error);
+            return [];
+        }
+    });
+
     const [activePage, setActivePage] = useState("Lista");
+
+    // Automatyczny zapis koszyka po każdej zmianie
+    useEffect(() => {
+        localStorage.setItem("cartItems", JSON.stringify(cartItems));
+    }, [cartItems]);
 
     const categories = ["Wszystkie", ...new Set(products.map(p => p.category))];
 
@@ -107,7 +124,9 @@ function App() {
                 return prev.filter(item => item.id !== id);
             }
             return prev.map(item =>
-                item.id === id ? { ...item, qty: item.qty - 1 } : item
+                item.id === id
+                    ? { ...item, qty: item.qty - 1 }
+                    : item
             );
         });
     }
@@ -115,7 +134,9 @@ function App() {
     function handleIncreaseQty(id) {
         setCartItems(prev =>
             prev.map(item =>
-                item.id === id ? { ...item, qty: item.qty + 1 } : item
+                item.id === id
+                    ? { ...item, qty: item.qty + 1 }
+                    : item
             )
         );
     }
@@ -146,15 +167,31 @@ function App() {
                                 value={query}
                                 onChange={(e) => setQuery(e.target.value)}
                             />
+
                             <button onClick={handleClear}>Wyczyść</button>
-                            <select value={category} onChange={(e) => setCategory(e.target.value)}>
+
+                            <select
+                                value={category}
+                                onChange={(e) => setCategory(e.target.value)}
+                            >
                                 {categories.map(cat => (
-                                    <option key={cat} value={cat}>{cat}</option>
+                                    <option key={cat} value={cat}>
+                                        {cat}
+                                    </option>
                                 ))}
                             </select>
-                            <select value={filterType} onChange={(e) => { setFilterType(e.target.value); setPriceInput(""); }}>
+
+                            <select
+                                value={filterType}
+                                onChange={(e) => {
+                                    setFilterType(e.target.value);
+                                    setPriceInput("");
+                                }}
+                            >
                                 {FILTER_OPTIONS.map(opt => (
-                                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                    <option key={opt.value} value={opt.value}>
+                                        {opt.label}
+                                    </option>
                                 ))}
                             </select>
                             {needsPriceInput && (
@@ -177,7 +214,9 @@ function App() {
                 {activePage === "Dodaj produkt" && (
                     <section>
                         <h1>Dodaj produkt</h1>
-                        <p className="subtitle">formularz dodawania produktu</p>
+                        <p className="subtitle">
+                            formularz dodawania produktu
+                        </p>
                     </section>
                 )}
 
@@ -205,14 +244,26 @@ function App() {
                                                 <td>{item.price} zł</td>
                                                 <td>
                                                     <div className="qty-controls">
-                                                        <button onClick={() => handleDecreaseQty(item.id)}>−</button>
+                                                        <button
+                                                            onClick={() => handleDecreaseQty(item.id)}
+                                                        >
+                                                            −
+                                                        </button>
+
                                                         <span>{item.qty}</span>
-                                                        <button onClick={() => handleIncreaseQty(item.id)}>+</button>
+
+                                                        <button
+                                                            onClick={() => handleIncreaseQty(item.id)}
+                                                        >
+                                                            +
+                                                        </button>
                                                     </div>
                                                 </td>
                                                 <td>{item.price * item.qty} zł</td>
                                                 <td>
-                                                    <button onClick={() => handleRemoveFromCart(item.id)}>
+                                                    <button
+                                                        onClick={() => handleRemoveFromCart(item.id)}
+                                                    >
                                                         Usuń
                                                     </button>
                                                 </td>
@@ -220,8 +271,14 @@ function App() {
                                         ))}
                                     </tbody>
                                 </table>
-                                <p className="cart-total">Łącznie: <strong>{totalPrice} zł</strong></p>
-                                <button onClick={() => setCartItems([])}>Wyczyść koszyk</button>
+
+                                <p className="cart-total">
+                                    Łącznie: <strong>{totalPrice} zł</strong>
+                                </p>
+
+                                <button onClick={() => setCartItems([])}>
+                                    Wyczyść koszyk
+                                </button>
                             </>
                         )}
                     </section>
